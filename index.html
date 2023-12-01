@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #001f3f; 
+            color: #fff;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+        }
+
+        .grid {
+            width: 100px;
+            height: 100px;
+            background-color: #add8e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            cursor: pointer;
+            border-radius: 20px; 
+        }
+
+        .black {
+            background-color: #000;
+        }
+
+        #info-box {
+            background-color: #add8e6;
+            border-radius: 20px;
+            padding: 10px;
+            margin-top: 20px;
+            color: #000;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        #score-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 120px;
+            background-color: #ffffcc;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #timer {
+            margin-left: 10px;
+            background-color: #ffffcc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .game-over-message {
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .you-won-message {
+            font-size: 30px;
+            font-weight: bold;
+            color: green;
+            margin-top: 20px;
+        }
+    </style>
+    <title>Flower Puzzle</title>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Flower puzzle created by arya & rujul</div>
+        <div class="game-container" id="game-container"></div>
+        <div id="info-box">
+            <div id="score-box">
+                <p>Score: <span id="score">0</span></p>
+                <p id="timer">Time: 2:00</p>
+            </div>
+        </div>
+        <div id="won-message"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameContainer = document.getElementById('game-container');
+            const scoreDisplay = document.getElementById('score');
+            const timerDisplay = document.getElementById('timer');
+            const wonMessage = document.getElementById('won-message');
+
+            const flowers = ['🌸', '🌼', '🌺', '🌻', '🌷', '💐', '🌹', '🏵️'];
+            const gridSize = 4;
+            let cards = [];
+            let flippedCards = [];
+            let score = 0;
+            let timer;
+
+            function initializeGame() {
+                clearInterval(timer);
+                score = 0;
+                flippedCards = [];
+                generateCards();
+                renderGrid();
+                startTimer();
+            }
+
+            function generateCards() {
+                const shuffledFlowers = [...flowers, ...flowers].sort(() => Math.random() - 0.5);
+                cards = shuffledFlowers.map(flower => ({ flower, matched: false, flipped: false }));
+            }
+
+            function renderGrid() {
+                gameContainer.innerHTML = '';
+                cards.forEach((card, index) => {
+                    const gridItem = document.createElement('div');
+                    gridItem.classList.add('grid');
+                    if (card.matched) {
+                        gridItem.classList.add('black');
+                    }
+                    gridItem.dataset.index = index;
+                    gridItem.textContent = card.flipped ? card.flower : '';
+                    gridItem.addEventListener('click', handleCardClick);
+                    gameContainer.appendChild(gridItem);
+                });
+            }
+
+            function handleCardClick(event) {
+                const index = event.target.dataset.index;
+                const selectedCard = cards[index];
+
+                if (selectedCard.matched || selectedCard.flipped || flippedCards.length >= 2) {
+                    return;
+                }
+
+                selectedCard.flipped = true;
+                flippedCards.push(selectedCard);
+
+                if (flippedCards.length === 2) {
+                    const [firstCard, secondCard] = flippedCards;
+
+                    if (firstCard.flower === secondCard.flower) {
+                        firstCard.matched = true;
+                        secondCard.matched = true;
+                        score++;
+
+                        if (score === flowers.length) {
+                            clearInterval(timer);
+                            showYouWonMessage();
+                        }
+                    } else {
+                        setTimeout(() => {
+                            firstCard.flipped = false;
+                            secondCard.flipped = false;
+                            renderGrid();
+                        }, 1000);
+                    }
+
+                    flippedCards = [];
+                }
+
+                scoreDisplay.textContent = score;
+                renderGrid();
+            }
+
+            function startTimer() {
+                let seconds = 120; 
+                timer = setInterval(() => {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    timerDisplay.textContent = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+                    if (seconds === 0) {
+                        clearInterval(timer);
+                        showGameOverMessage();
+                    } else {
+                        seconds--;
+                    }
+                }, 1000);
+            }
+
+            function showGameOverMessage() {
+                gameContainer.innerHTML = '<p class="game-over-message">Game Over!</p>';
+            }
+
+            function showYouWonMessage() {
+                wonMessage.textContent = 'You won! 🎉';
+            }
+
+            initializeGame();
+        });
+    </script>
+</body>
+</html>
